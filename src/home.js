@@ -1,11 +1,13 @@
 import React, { Component } from "react";
 import { Container, Row, Col, Form, Button, ListGroup } from "react-bootstrap";
 import '../css/styles.css';
+import Feeds from './feeds.js';
+
 function Item(props){
   if(props.item){
     return (
       <div>
-          <h3>{props.item.url}</h3>
+          <h3>{props.item.data.feed.title}</h3>
       </div>
     );
   } else {
@@ -38,7 +40,7 @@ export default class Home extends Component {
     this.state = {
       newURL: '',
       selected: null,
-      URLList: []
+      feeds: []
     }
     
   }
@@ -51,21 +53,25 @@ export default class Home extends Component {
 
   addURL(){
     if(this.state.newURL !== ''){
-      fetch(this.state.newURL)
-      .then(function(response) {
-        return response.json();
-      });
-      var newURL = {
-        id: new Date().valueOf(),
-        url: this.state.newURL
+      var that = this;
+      let xhttp = new XMLHttpRequest();
+      xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+          var newFeed = {
+            id: new Date().valueOf(),
+            data: JSON.parse(xhttp.responseText)
+          };
+          var allFeeds = that.state.feeds;
+          allFeeds.unshift(newFeed);
+          that.setState({
+            feeds: allFeeds,
+            newURL: '',
+            selected: newFeed
+          });
+        }
       };
-      var URLList = this.state.URLList;
-      URLList.unshift(newURL);
-      this.setState({
-        URLList: URLList,
-        newURL: '',
-        selected: newURL
-      });
+      xhttp.open("GET", this.state.newURL, true);
+      xhttp.send();
     }
   }
 
@@ -99,10 +105,10 @@ export default class Home extends Component {
                         onClick={this.addURL.bind(this)}
                     >Add</Button>
                   </div>
-                  <ListItem items={this.state.URLList} selected={this.state.selected} />
+                  <ListItem items={this.state.feeds} selected={this.state.selected} />
                 </div>
                 <div className="right-panel">
-                  <h1>right-panel</h1>
+                  <Feeds feeds={this.state.selected} />
                 </div>
               </div>
             </Col>
